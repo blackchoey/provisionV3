@@ -1,0 +1,2 @@
+Content provided in this folder aims to help you create Azure Bot service when you don't use ARM to create infrastrcture for your app.
+If you use ARM to create infrastrcture for your app, azure.bicep already invokes this module so there's no need to deploy ARM template in this folder again.
