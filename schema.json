@@ -1,0 +1,27 @@
+{
+    "$schema": "https://json-schema.org/draft/2020-12/schema",
+    "$id": "https://raw.githubusercontent.com/OfficeDev/TeamsFx",
+    "type": "object",
+    "required": ["version"],
+    "additionalProperties": false,
+    "properties": {
+        "version": {
+            "type": "string",
+            "minLength": 2,
+            "title": "version this yaml file uses",
+            "enum": ["0.0.1"]
+        },
+        "globalVars": {
+            "type": "object"
+        },
+        "provision": {
+            "type": "object"
+        },
+        "deploy": {
+          "type": "object"
+        },
+        "publish": {
+          "type": "object"
+        }
+    }
+}

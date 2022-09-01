@@ -1,0 +1,58 @@
+# yaml-language-server: $schema=./schema.json
+
+# This file contains configurations used in each Teams Toolkit lifecycle. It's not a workflow which describes execution order.
+# Note:
+# 1. Names wrapped in {{...}} are environment variable names.
+# 2. If any config value is empty (the referenced environment variable is not defined), TeamsFx will generate a new value and save it for you.
+version: "0.0.1"
+
+globalVars:
+  teamsAppTenantId: {{ autogen-if-not-exist }} 
+  subscriptionId: {{ autogen-if-not-exist }} # to be moved to provision
+  subscriptionName: {{ autogen-if-not-exist }} # to be removed 
+  tenantId: {{ autogen-if-not-exist }} # to be removed
+  resourceGroupName: {{ autogen-if-not-exist }} # to be moved to provision
+  location: {{ autogen-if-not-exist }} # to be removed
+  resourceNameSuffix: {{ autogen-if-not-exist }} # to be moved to provision
+
+provision:
+  azureProvision:
+    armTemplates: # The arm templates are deployed parallelly.
+      - path: ./bot/deployment/azure.bicep # Relative path to project root.
+        parameters: ./bot/deployment/azure.parameters.json # Relative path to project root. Placeholders in it will be replaced before provision.
+      - path: ./tab/deployment/azure.bicep
+        parameters: # Can also provide parameter key value pairs directly
+          resourceBaseName: chaoyidemo{{RESOURCE_SUFFIX}}
+    bicepCliVersion: 0.9.1 # Teams Toolkit will download this bicep CLI version from github for you, will use bicep cli in PATH if you remove this config.
+
+  appRegistration:
+    aadApp: # Register Azure Active Directory application that used to enable authentication for your app
+      clientId: {{AAD_CLIENT_ID}} # Will create a new AAD app if the value is empty
+      clientSecret: {{AAD_CLIENT_SECRET}} # Will create a new client secret if the value is empty. You can comment this line if your app does not need a client secret (usually in SPA tab app)
+      objectId: {{AAD_OBJECT_ID}}
+      oauth2PermissionScopeId: {{AAD_OAUTH2_PERMISSION_SCOPE_ID}} # The id of access_as_user scope
+      # Following content are used to configure AAD app for your Teams app
+      manifestPath: ./templates/appPackage/aad.template.json
+      tabDomain: {{CLOUD_TAB_Domain}} # This is used to enable Single Sign-On for your tab app and configure reply urls to allow login from tab app
+      botId: {{BOT_ID}} # This is used to enable Single Sign-On for your bot / message extension app
+      botDomain: {{CLOUD_BOT_Domain}} # This is used to configure reply urls to allow login from bot / message extension app
+
+    bot: # Register bot which is required to host a bot / message extension app
+      app: # Another Azure Active Directory application which is required during Azure Bot registration. If you want to use user assigned identity during Azure Bot registration, comment this section and declare user assigned identity in Azure Bot's ARM template
+        type: multiTenant # Available values are: singleTenant, multiTenant. Refer https://aka.ms/teamsfx-bot-registration for more information
+        appId: {{BOT_ID}} # Will create a new AAD app if the value is empty
+        appPassword: {{BOT_PASSWORD}} # Will create a new client secret if the value is empty
+        appTenantId: {{BOT_TENANTID}} # Only required when app type is singleTenant
+      # registration: # Create Azure Bot service for your app. You only need to enable this when not using TeamsFx's built-in Azure Provision logic
+      #   armTemplate: ./bot/deployment/azurebot.bicep # We use bicep to define Azure Bot service
+      #   parameter: ./bot/deployment/azurebot.parameters.json # Parameters used to register Azure Bot service
+
+    teamsApp: # Register your Teams app
+      appId: {{TEAMS_APP_ID}} # Will create a new Teams app if the value is empty
+      manifestPath: ./templates/appPackage/manifest.template.json
+      tabDomain: {{CLOUD_TAB_ENDPOINT}} # Required to define your tab capability and enable Single Sign-On for your app
+      botId: {{BOT_ID}} # Required to define your bot / message extension capability
+      aadAppClientId: {{AAD_CLIENT_ID}} # Used to enable Single Sign-On for your app
+      botDomain: {{CLOUD_BOT_DOMAIN}} # Required to enable Single Sign-On for your app
+
+deploy:
