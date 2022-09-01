@@ -56,3 +56,58 @@ provision:
       botDomain: {{CLOUD_BOT_DOMAIN}} # Required to enable Single Sign-On for your app
 
 deploy:
+- driver: npm
+  args:
+    dir: ./bot
+    params: run build
+- driver: azureAppService
+  build: 
+    - driver: npm
+      args:
+        dir: ./bot
+        params: run build
+    - driver: npm
+      args:
+        dir: ./bot
+        params: run build
+  args:
+    # source code location
+    src: ./bot
+    # command that runs in build process, leave blank will do nothing
+    buildCommand: npm run build
+    # deploy base folder
+    dist: ./bot
+    # can be changed to any ignore file location, leave blank will ignore nothing
+    ignoreFile: ./bot/.webappignore
+    # can be changed to any Azure App Service you have permission to deploy
+    resourceId: ${bot_resource_id}
+- driver: azureFunction
+  args:
+    # source code location
+    src: ./command
+    # command that runs in build process, leave blank will do nothing
+    buildCommand: dotnet publish -configuration Release
+    # deploy base folder
+    dist: ./command/bin/Release/6.0/publish
+    # can be changed to any ignore file location, leave blank will ignore nothing
+    ignoreFile:
+    resourceId: ${command_resource_id}
+- driver: azureStorage
+  config:
+    index: index.htm
+  args:
+    # source code location
+    src: ./tab
+    # command that runs in build process, leave blank will do nothing
+    buildCommand: npm run build:teamsfx
+    # deploy base folder
+    dist: ./tab
+    # can be changed to any ignore file location, leave blank will ignore nothing
+    ignoreFile:
+    resourceId: ${tab_resource_id}
+- driver: script
+  args:
+    # source code location
+    src: ./user_defined
+    # script location, relative to source code location
+    scriptPath: ./user_defined_deploy_path.sh
